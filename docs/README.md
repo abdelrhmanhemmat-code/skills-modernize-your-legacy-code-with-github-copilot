@@ -1,3 +1,4 @@
+
 # School Accounting System
 
 This directory documents the current COBOL accounting prototype. The program models a single school account balance and supports balance inquiries, credits, and debits.
@@ -62,6 +63,8 @@ These requirements are documentation gaps rather than behavior currently present
 
 ## Application Data Flow
 
+The sequence below shows how a user request flows through the menu, accounting operations, and balance storage.
+
 ```mermaid
 sequenceDiagram
 	actor User
@@ -69,47 +72,45 @@ sequenceDiagram
 	participant Ops as Operations
 	participant Data as DataProgram
 
-	Main->>User: Display account menu
-	User->>Main: Enter choice
+	loop Until the user selects Exit
+		Main->>User: Display account menu
+		User->>Main: Select 1-
 
-	loop Until the user chooses Exit
 		alt View balance (1)
 			Main->>Ops: CALL Operations("TOTAL ")
-			Ops->>Data: CALL DataProgram("READ", balance)
+			Ops->>Data: CALL DataProgram("READ", FINAL-BALANCE)
 			Data-->>Ops: Return stored balance
 			Ops-->>User: Display current balance
 		else Credit account (2)
 			Main->>Ops: CALL Operations("CREDIT")
 			Ops->>User: Request credit amount
 			User-->>Ops: Enter amount
-			Ops->>Data: CALL DataProgram("READ", balance)
+			Ops->>Data: READ current balance
 			Data-->>Ops: Return stored balance
 			Ops->>Ops: Add amount to balance
-			Ops->>Data: CALL DataProgram("WRITE", balance)
+			Ops->>Data: WRITE updated balance
 			Data-->>Ops: Store updated balance
 			Ops-->>User: Display new balance
 		else Debit account (3)
 			Main->>Ops: CALL Operations("DEBIT ")
 			Ops->>User: Request debit amount
 			User-->>Ops: Enter amount
-			Ops->>Data: CALL DataProgram("READ", balance)
+			Ops->>Data: READ current balance
 			Data-->>Ops: Return stored balance
+
 			alt Balance is sufficient
 				Ops->>Ops: Subtract amount from balance
-				Ops->>Data: CALL DataProgram("WRITE", balance)
+				Ops->>Data: WRITE updated balance
 				Data-->>Ops: Store updated balance
 				Ops-->>User: Display new balance
 			else Insufficient funds
 				Ops-->>User: Display insufficient-funds message
 			end
+		else Exit (4)
+			Main->>Main: Set CONTINUE-FLAG to "NO"
 		else Invalid choice
 			Main-->>User: Display invalid-choice message
-		else Exit (4)
-			Main->>Main: Set continue flag to NO
 		end
-
-		Main->>User: Display menu again
-		User->>Main: Enter next choice
 	end
 
 	Main-->>User: Display goodbye message
